@@ -10,6 +10,24 @@ export default function TodoInput({ addTask }: any) {
 
   const buttonRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  // 🌟 ENTRY ANIMATION (whole row)
+  useEffect(() => {
+    if (!wrapperRef.current) return;
+
+    gsap.fromTo(
+      wrapperRef.current,
+      { y: 30, opacity: 0, scale: 0.98 },
+      {
+        y: 0,
+        opacity: 1,
+        scale: 1,
+        duration: 0.6,
+        ease: "power3.out"
+      }
+    );
+  }, []);
 
   // 🧲 Magnetic Button
   useEffect(() => {
@@ -22,8 +40,8 @@ export default function TodoInput({ addTask }: any) {
       const y = e.clientY - rect.top - rect.height / 2;
 
       gsap.to(btn, {
-        x: x * 0.2,
-        y: y * 0.2,
+        x: x * 0.25,
+        y: y * 0.25,
         duration: 0.3,
         ease: "power2.out"
       });
@@ -43,7 +61,7 @@ export default function TodoInput({ addTask }: any) {
   }, []);
 
   const handleAdd = () => {
-    if (!text.trim() || !buttonRef.current || !inputRef.current) return;
+    if (!text.trim()) return;
 
     addTask(text, priority);
 
@@ -52,106 +70,107 @@ export default function TodoInput({ addTask }: any) {
 
     const tl = gsap.timeline();
 
-    // 🔥 Button press
-    tl.to(btn, {
-      scale: 0.9,
-      duration: 0.1
-    })
+    // 🔥 Button bounce
+    tl.to(btn, { scale: 0.9, duration: 0.1 })
       .to(btn, {
-        scale: 1.15,
+        scale: 1.2,
         duration: 0.25,
         ease: "back.out(2.5)"
       })
 
-      // 🌿 Green ripple glow
+      // 🌿 glow
       .fromTo(
         btn,
         { boxShadow: "0 0 0px rgba(34,197,94,0.6)" },
         {
-          boxShadow: "0 0 25px rgba(34,197,94,0)",
+          boxShadow: "0 0 30px rgba(34,197,94,0)",
           duration: 0.5
         },
         "-=0.2"
       )
 
-      // 💨 Input slide out
-      .to(
-        input,
-        {
-          x: -30,
-          opacity: 0,
-          duration: 0.25,
-          ease: "power2.in"
-        },
-        "-=0.3"
-      )
-
-      // 🔄 Reset
-      .add(() => {
-        setText("");
-        gsap.set(input, { x: 30 });
+      // 💨 input exit
+      .to(input, {
+        x: -20,
+        opacity: 0,
+        duration: 0.2
       })
 
-      // ✨ Slide back
+      // reset
+      .add(() => {
+        setText("");
+        gsap.set(input, { x: 20 });
+      })
+
+      // bring back
       .to(input, {
         x: 0,
         opacity: 1,
-        duration: 0.3,
-        ease: "power2.out"
+        duration: 0.3
       });
   };
 
   return (
-    <div className="mb-6">
+    <motion.div
+      ref={wrapperRef}
+      className="mb-6"
+    >
+      <div className="flex gap-3 items-center">
 
-      <div className="flex gap-3">
-
-        {/* 🧊 Input */}
-        <input
+        {/* ✨ INPUT (animated focus) */}
+        <motion.input
           ref={inputRef}
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleAdd()}
           placeholder="Add a task..."
+          whileFocus={{
+            scale: 1.02,
+            boxShadow: "0px 0px 0px 3px rgba(34,197,94,0.2)"
+          }}
           className="flex-1 p-4 rounded-xl
           bg-[var(--card)] border border-[var(--border)]
           text-[var(--foreground)]
           placeholder:text-[var(--muted-foreground)]
-          focus:outline-none focus:ring-2 focus:ring-[var(--primary)]
-          transition"
+          outline-none transition"
         />
 
-        {/* 🧊 Select */}
+        {/* 🌿 SELECT (micro animation) */}
         <motion.select
-          whileFocus={{ scale: 1.05 }}
           value={priority}
           onChange={(e) => setPriority(e.target.value)}
-          className="rounded-xl px-4
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="rounded-xl px-4 py-3
           bg-[var(--card)] border border-[var(--border)]
           text-[var(--foreground)]
-          focus:outline-none cursor-pointer"
+          cursor-pointer outline-none"
         >
           <option value="High">🔥 High</option>
           <option value="Medium">⚡ Medium</option>
           <option value="Low">🌿 Low</option>
         </motion.select>
 
-        {/* 🚀 Add Button */}
+        {/* 🚀 BUTTON (premium motion) */}
         <motion.button
           ref={buttonRef}
-          whileTap={{ scale: 0.92 }}
           onClick={handleAdd}
-          className="px-6 rounded-xl font-medium text-white
-          bg-[var(--primary)]
-          hover:brightness-110
-          active:scale-95
-          transition-all duration-300"
+          whileHover={{
+            scale: 1.08,
+            boxShadow: "0px 12px 30px rgba(34,197,94,0.35)"
+          }}
+          whileTap={{ scale: 0.92 }}
+          transition={{
+            type: "spring",
+            stiffness: 300,
+            damping: 18
+          }}
+          className="px-6 py-3 rounded-xl font-medium text-white bg-[var(--primary)]"
         >
           Add
         </motion.button>
 
       </div>
-
-    </div>
+    </motion.div>
   );
 }

@@ -10,53 +10,70 @@ export default function TodoItem({
   toggleTask,
   deleteTask
 }: any) {
-  const checkRef = useRef<any>(null);
+  const checkRef = useRef<HTMLDivElement | null>(null);
 
-  // 🎯 GSAP checkbox animation
+  // 🎯 Checkbox animation
   const handleCheck = () => {
     if (checkRef.current) {
       gsap.fromTo(
         checkRef.current,
-        { scale: 0.5, rotate: -20 },
+        { scale: 0.6, rotate: -15 },
         {
-          scale: 1.2,
+          scale: 1.15,
           rotate: 0,
           duration: 0.3,
-          ease: "back.out(4)",
+          ease: "back.out(3)",
           yoyo: true,
           repeat: 1
         }
       );
     }
+
     toggleTask(task.id);
   };
 
-  // 🌿 Green-based priority system (no harsh colors)
-  const priorityStyles: any = {
-    High: "bg-[var(--accent)] text-white",
-    Medium: "bg-[var(--secondary)] text-[var(--secondary-foreground)]",
-    Low: "bg-[var(--muted)] text-[var(--muted-foreground)]"
+  // 🌿 SAFE priority mapping (FIXED)
+  const priorityStyles: Record<string, string> = {
+    High: "bg-green-500 text-white",
+    Medium: "bg-green-300 text-black",
+    Low: "bg-gray-200 text-gray-700"
   };
+
+  const safePriority =
+    task.priority === "High" ||
+    task.priority === "Medium" ||
+    task.priority === "Low"
+      ? task.priority
+      : "Medium";
 
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, y: 40, scale: 0.95 }}
+      initial={{ opacity: 0, y: 30, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{
         opacity: 0,
-        x: 120,
+        x: 100,
         scale: 0.9,
         transition: { duration: 0.25 }
       }}
-      whileHover={{ scale: 1.02 }}
+      whileHover={{
+        scale: 1.02,
+        boxShadow: "0px 10px 25px rgba(0,0,0,0.08)"
+      }}
+      transition={{
+        type: "spring",
+        stiffness: 260,
+        damping: 20
+      }}
       className="p-4 rounded-2xl flex justify-between items-center 
       bg-[var(--card)] border border-[var(--border)]
-      shadow-sm hover:shadow-md transition-all duration-300"
+      shadow-sm transition-all duration-300"
     >
+      {/* LEFT SIDE */}
       <div className="flex items-center gap-4">
 
-        {/* ✅ Animated Checkbox */}
+        {/* Checkbox */}
         <motion.div
           ref={checkRef}
           whileTap={{ scale: 0.85 }}
@@ -64,7 +81,9 @@ export default function TodoItem({
           className="w-6 h-6 flex items-center justify-center rounded-md 
           border border-[var(--border)] cursor-pointer"
           style={{
-            background: task.completed ? "var(--primary)" : "transparent"
+            background: task.completed
+              ? "var(--primary)"
+              : "transparent"
           }}
         >
           {task.completed && (
@@ -78,37 +97,45 @@ export default function TodoItem({
           )}
         </motion.div>
 
+        {/* TEXT */}
         <div>
           <motion.p
             layout
-            initial={false}
             animate={{
-              opacity: task.completed ? 0.5 : 1
-            }}
-            className={`font-medium ${
-              task.completed
+              opacity: task.completed ? 0.5 : 1,
+              textDecoration: task.completed
                 ? "line-through"
-                : "text-[var(--foreground)]"
-            }`}
+                : "none"
+            }}
+            className="font-medium text-[var(--foreground)]"
           >
             {task.text}
           </motion.p>
 
-          <span
-            className={`px-3 py-1 text-xs rounded-full mt-1 inline-block ${priorityStyles[task.priority]}`}
+          {/* PRIORITY BADGE (FIXED) */}
+          <motion.span
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            whileHover={{ scale: 1.1 }}
+            transition={{ type: "spring", stiffness: 300 }}
+            className={`px-3 py-1 text-xs rounded-full mt-1 inline-block
+            ${priorityStyles[safePriority]}`}
           >
-            {task.priority}
-          </span>
+            {safePriority}
+          </motion.span>
         </div>
-
       </div>
 
-      {/* 🗑 Delete with better feedback */}
+      {/* DELETE BUTTON */}
       <motion.button
-        whileHover={{ scale: 1.15, rotate: 8 }}
+        whileHover={{
+          scale: 1.2,
+          rotate: 10,
+          color: "#ef4444"
+        }}
         whileTap={{ scale: 0.8 }}
         onClick={() => deleteTask(task.id)}
-        className="text-[var(--muted-foreground)] hover:text-red-500 transition"
+        className="text-[var(--muted-foreground)] transition"
       >
         <Trash2 size={18} />
       </motion.button>

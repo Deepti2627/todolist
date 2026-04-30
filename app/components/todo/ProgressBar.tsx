@@ -9,7 +9,7 @@ export default function ProgressBar({ tasks }: any) {
   return (
     <div className="mb-8">
 
-      {/* 🧠 Header */}
+      
       <div className="flex justify-between mb-2 text-sm">
         <span className="text-[var(--muted-foreground)]">
           Progress

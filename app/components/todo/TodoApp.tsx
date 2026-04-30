@@ -46,42 +46,46 @@ export default function TodoApp() {
  
   }, []);
 
-  const addTask = (text: string, priority: string) => {
-    if (!text.trim()) return;
+const addTask = (text: string, priority: string) => {
+  if (!text.trim()) return;
 
-    setTasks((prev) => [
-      ...prev,
-      {
-        id: Date.now(),
-        text,
-        completed: false,
-        priority
-      }
-    ]);
+  const safePriority =
+    priority === "High" || priority === "Medium" || priority === "Low"
+      ? priority
+      : "Medium";
 
-    setShowPopup(true);
-
-    // 💥 bump animation
-    if (containerRef.current) {
-      gsap.fromTo(
-        containerRef.current,
-        { scale: 1 },
-        {
-          scale: 1.03,
-          duration: 0.2,
-          yoyo: true,
-          repeat: 1,
-          ease: "power1.inOut"
-        }
-      );
+  setTasks((prev) => [
+    ...prev,
+    {
+      id: Date.now(),
+      text,
+      completed: false,
+      priority: safePriority
     }
+  ]);
 
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+  setShowPopup(true);
 
-    timeoutRef.current = setTimeout(() => {
-      setShowPopup(false);
-    }, 2000);
-  };
+  if (containerRef.current) {
+    gsap.fromTo(
+      containerRef.current,
+      { scale: 1 },
+      {
+        scale: 1.03,
+        duration: 0.2,
+        yoyo: true,
+        repeat: 1,
+        ease: "power1.inOut"
+      }
+    );
+  }
+
+  if (timeoutRef.current) clearTimeout(timeoutRef.current);
+
+  timeoutRef.current = setTimeout(() => {
+    setShowPopup(false);
+  }, 2000);
+};
 
   const toggleTask = (id: number) => {
     setTasks((prev) =>
