@@ -1,12 +1,9 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import ProgressBar from "./ProgressBar";
 import TodoInput from "./TodoInput";
 import TodoList from "./TodoList";
-import { motion } from "framer-motion";
 import gsap from "gsap";
-import SuccessPopup from "./SuccessPopup";
 
 export type Task = {
   id: number;
@@ -16,22 +13,60 @@ export type Task = {
 };
 
 export default function TodoApp() {
-  const [showPopup, setShowPopup] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+const logoRef = useRef<HTMLDivElement>(null);
+const [isLoaded, setIsLoaded] = useState(false);
+const [isMounted, setIsMounted] = useState(false);
+const [tasks, setTasks] = useState<Task[]>(() => {
+  if (typeof window !== "undefined") {
+    try {
+      const saved = localStorage.getItem("tasks");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+});
+// ✅ Load AFTER mount
+useEffect(() => {
+  try {
+    const saved = localStorage.getItem("tasks");
+    if (saved) {
+      setTasks(JSON.parse(saved));
+    }
+  } catch {}
+  setIsMounted(true);
+}, []);
 
-  const [tasks, setTasks] = useState<Task[]>([
-    { id: 1, text: "Design homepage", completed: false, priority: "High" },
-    { id: 2, text: "Drink water", completed: true, priority: "Low" }
-  ]);
+// ✅ Save when tasks change
+useEffect(() => {
+  if (isMounted) {
+    localStorage.setItem("tasks", JSON.stringify(tasks));
+  }
+}, [tasks, isMounted]);
+useEffect(() => {
+  const saved = localStorage.getItem("tasks");
+  if (saved) {
+    setTasks(JSON.parse(saved));
+  }
+  setIsLoaded(true);
+}, []);
+useEffect(() => {
+  if (isLoaded) {
+    localStorage.setItem("tasks", JSON.stringify(tasks));
+  }
+}, [tasks, isLoaded]);
+useEffect(() => {
+  localStorage.setItem("tasks", JSON.stringify(tasks));
+}, [tasks]);
+  const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
 
-  // 🎬 GSAP intro + floating
+  // 🎬 Page animation
   useEffect(() => {
     if (!containerRef.current) return;
 
-    const tl = gsap.timeline();
-
-    tl.fromTo(
+    gsap.fromTo(
       containerRef.current,
       { y: 80, opacity: 0, scale: 0.95 },
       {
@@ -42,225 +77,160 @@ export default function TodoApp() {
         ease: "power3.out"
       }
     );
-
- 
   }, []);
 
-const addTask = (text: string, priority: string) => {
-  if (!text.trim()) return;
+  const addTask = (text: string) => {
+    if (!text.trim()) return;
 
-  const safePriority =
-    priority === "High" || priority === "Medium" || priority === "Low"
-      ? priority
-      : "Medium";
-
-  setTasks((prev) => [
-    ...prev,
-    {
-      id: Date.now(),
-      text,
-      completed: false,
-      priority: safePriority
-    }
-  ]);
-
-  setShowPopup(true);
-
-  if (containerRef.current) {
-    gsap.fromTo(
-      containerRef.current,
-      { scale: 1 },
+    setTasks((prev) => [
+      ...prev,
       {
-        scale: 1.03,
-        duration: 0.2,
-        yoyo: true,
-        repeat: 1,
-        ease: "power1.inOut"
+        id: Date.now(),
+        text,
+        completed: false,
+        priority: "Medium"
       }
-    );
-  }
+    ]);
 
-  if (timeoutRef.current) clearTimeout(timeoutRef.current);
-
-  timeoutRef.current = setTimeout(() => {
-    setShowPopup(false);
-  }, 2000);
-};
+    // 💥 bounce effect
+    if (containerRef.current) {
+      gsap.fromTo(
+        containerRef.current,
+        { scale: 1 },
+        {
+          scale: 1.03,
+          duration: 0.2,
+          yoyo: true,
+          repeat: 1
+        }
+      );
+    }
+  };
 
   const toggleTask = (id: number) => {
     setTasks((prev) =>
-      prev.map((task) =>
-        task.id === id ? { ...task, completed: !task.completed } : task
+      prev.map((t) =>
+        t.id === id ? { ...t, completed: !t.completed } : t
       )
     );
   };
 
   const deleteTask = (id: number) => {
-    setTasks((prev) => prev.filter((task) => task.id !== id));
+    setTasks((prev) => prev.filter((t) => t.id !== id));
   };
 
+  useEffect(() => {
+  if (!logoRef.current) return;
+
+  gsap.fromTo(
+    logoRef.current,
+    { scale: 0, rotate: -180 },
+    {
+      scale: 1,
+      rotate: 0,
+      duration: 0.6,
+      ease: "back.out(2)"
+    }
+  );
+
+  // subtle floating loop
+  gsap.to(logoRef.current, {
+    y: -4,
+    duration: 1.5,
+    repeat: -1,
+    yoyo: true,
+    ease: "sine.inOut"
+  });
+}, []);
+
+  const clearCompleted = () => {
+    setTasks((prev) => prev.filter((t) => !t.completed));
+  };
+
+  const filteredTasks = tasks.filter((task) => {
+    if (filter === "active") return !task.completed;
+    if (filter === "completed") return task.completed;
+    return true;
+  });
+if (!isMounted) return null;
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-[var(--background)]">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-[#f7f7f7] p-6">
 
-      <SuccessPopup show={showPopup} />
+      {/* HEADER */}
+      <div className="text-center mb-8">
+        <div className="flex justify-center items-center gap-2">
+<div
+  ref={logoRef}
+  className="w-8 h-8 rounded-md"
+  style={{ backgroundColor: "#0d9488" }}
+/>        <h1 className="text-xl font-semibold">TaskFlow</h1>
+        </div>
+        <p className="text-sm text-gray-500 mt-1">
+          Stay organized, stay productive
+        </p>
+      </div>
 
-      <motion.div
+      {/* CARD */}
+      <div
         ref={containerRef}
-        initial={{ opacity: 0, y: 80, scale: 0.95 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.8 }}
-        whileHover={{
-          rotateX: 2,
-          rotateY: -2,
-          transition: { duration: 0.3 }
-        }}
-        className="w-full max-w-xl bg-[var(--card)] border border-[var(--border)]
-        rounded-3xl shadow-md p-6 relative overflow-hidden"
+        className="w-full max-w-xl bg-white rounded-2xl shadow-lg p-6"
       >
+        {/* INPUT */}
+        <TodoInput addTask={addTask} />
 
-        {/* 🌿 Glow background */}
-        <div className="absolute inset-0 pointer-events-none">
-          <motion.div
-            animate={{
-              opacity: [0.08, 0.15, 0.08],
-              scale: [1, 1.05, 1]
-            }}
-            transition={{
-              duration: 4,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-            className="w-full h-full bg-[var(--primary)] blur-3xl opacity-10"
-          />
+        {/* TABS */}
+        <div className="flex bg-gray-100 rounded-xl p-1 text-sm mb-4">
+          <button
+            onClick={() => setFilter("all")}
+            className={`flex-1 py-2 rounded-lg ${
+              filter === "all"
+                ? "bg-white font-medium"
+                : "text-gray-500"
+            }`}
+          >
+            All
+          </button>
+
+          <button
+            onClick={() => setFilter("active")}
+            className={`flex-1 py-2 rounded-lg ${
+              filter === "active"
+                ? "bg-white font-medium"
+                : "text-gray-500"
+            }`}
+          >
+            Active
+          </button>
+
+          <button
+            onClick={() => setFilter("completed")}
+            className={`flex-1 py-2 rounded-lg ${
+              filter === "completed"
+                ? "bg-white font-medium"
+                : "text-gray-500"
+            }`}
+          >
+            Completed
+          </button>
         </div>
 
-        {/* 🧠 Header */}
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={{
-            hidden: {},
-            visible: {
-              transition: { staggerChildren: 0.06 }
-            }
-          }}
-          className="text-center mb-6 relative z-10"
-        >
+        {/* LIST */}
+        <TodoList
+          tasks={filteredTasks}
+          toggleTask={toggleTask}
+          deleteTask={deleteTask}
+        />
 
-<motion.div
-  initial="hidden"
-  animate="visible"
-  variants={{
-    hidden: {},
-    visible: {
-      transition: {
-        staggerChildren: 0.05
-      }
-    }
-  }}
-  className="text-center mb-6"
->
-
-  {/* 📝 Title */}
-  <motion.h1 className="text-3xl font-semibold text-[var(--foreground)]">
-    {Array.from("📝 Todo List").map((char, i) => (
-      <motion.span
-        key={i}
-        variants={{
-          hidden: { y: -25, opacity: 0 },
-          visible: {
-            y: 0,
-            opacity: 1,
-            transition: {
-              type: "spring",
-              stiffness: 180,
-              damping: 14
-            }
-          }
-        }}
-        whileHover={{
-          y: -6,
-          color: "var(--primary)"
-        }}
-        className="inline-block will-change-transform"
-        style={{
-          marginRight: char === " " ? "0.35rem" : "0"
-        }}
-      >
-        {char}
-      </motion.span>
-    ))}
-  </motion.h1>
-
-  {/* ✨ Subtitle */}
-  <motion.p
-    variants={{
-      hidden: { opacity: 0, y: 10 },
-      visible: {
-        opacity: 1,
-        y: 0,
-        transition: {
-          duration: 0.4,
-          ease: "easeOut"
-        }
-      }
-    }}
-    className="text-[var(--muted-foreground)] mt-1 text-sm"
-  >
-    Stay organized in a clean way
-  </motion.p>
-
-</motion.div>
-
-          {/* 🌿 Underline */}
-          <motion.div
-            variants={{
-              hidden: { width: 0, opacity: 0 },
-              visible: {
-                width: "60px",
-                opacity: 1,
-                transition: { delay: 0.3, duration: 0.4 }
-              }
-            }}
-            className="h-[3px] bg-[var(--primary)] mx-auto mt-3 rounded-full"
-          />
-        </motion.div>
-
-        {/* 📊 Progress */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="relative z-10"
-        >
-          <ProgressBar tasks={tasks} />
-        </motion.div>
-
-        {/* ✍️ Input */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="relative z-10"
-        >
-          <TodoInput addTask={addTask} />
-        </motion.div>
-
-        {/* 📋 List */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="relative z-10"
-        >
-          <TodoList
-            tasks={tasks}
-            toggleTask={toggleTask}
-            deleteTask={deleteTask}
-          />
-        </motion.div>
-
-      </motion.div>
+        {/* FOOTER */}
+        <div className="flex justify-between items-center mt-6 text-sm text-gray-500 border-t pt-4">
+          <span>
+            {tasks.filter((t) => !t.completed).length} tasks left
+          </span>
+          <button onClick={clearCompleted} className="hover:text-black">
+            Clear completed
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
