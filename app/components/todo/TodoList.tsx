@@ -61,7 +61,6 @@ export default function TodoList({ tasks, filter, toggleTask, deleteTask }: any)
 
   return (
     <div className="space-y-4">
-      {/* popLayout ensures smooth item re-ordering when tasks are filtered or removed */}
       <AnimatePresence mode="popLayout">
         {tasks.map((task: any) => (
          <motion.div
@@ -75,7 +74,7 @@ export default function TodoList({ tasks, filter, toggleTask, deleteTask }: any)
       type: "spring", 
       stiffness: 500, 
       damping: 30,
-      // precision: 0.0001 <--- Remove this line
+      
     }
   }}
 >

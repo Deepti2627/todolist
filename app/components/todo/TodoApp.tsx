@@ -69,13 +69,11 @@ export default function TodoApp() {
 
   return (
     <div className="min-h-screen bg-[#f8f9fa] flex justify-center px-4 py-12 font-sans relative overflow-hidden">
-      {/* WIDER CONTAINER: max-w-lg matches your request for a wider look */}
       <div className="w-full max-w-lg"> 
         
         {/* HEADER */}
     <div className="text-center mb-10">
   <div className="flex justify-center items-center gap-3 mb-3">
-    {/* Logo Floating Animation - Shadow removed for a flat, clean look */}
     <motion.div 
       animate={{ y: [0, -8, 0] }}
       transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
@@ -131,7 +129,6 @@ export default function TodoApp() {
         </div>
       </div>
 
-      {/* TOAST NOTIFICATION: As seen in Screenrecording_20260504_110839.mp4 */}
       <AnimatePresence>
         {toast && (
           <motion.div
