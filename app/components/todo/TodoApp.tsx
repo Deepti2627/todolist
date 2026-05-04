@@ -15,7 +15,7 @@ export type Task = {
 export default function TodoApp() {
   const mounted = useMounted();
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [filter, setFilter] = useState("all");
+  const [filter, setFilter] = useState("All");
 
   useEffect(() => {
     const stored = localStorage.getItem("taskflow-todos");
@@ -52,8 +52,8 @@ export default function TodoApp() {
   };
 
   const filtered = tasks.filter(t => {
-    if (filter === "active") return !t.completed;
-    if (filter === "completed") return t.completed;
+    if (filter === "Active") return !t.completed;
+    if (filter === "Completed") return t.completed;
     return true;
   });
 
@@ -85,7 +85,7 @@ export default function TodoApp() {
 
           {/* FILTERS */}
           <div className="relative flex bg-gray-100 rounded-lg p-1 mb-4">
-            {["all", "active", "completed"].map((f) => (
+            {["All", "Active", "Completed"].map((f) => (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
