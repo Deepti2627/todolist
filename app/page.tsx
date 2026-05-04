@@ -1,5 +1,14 @@
-import TodoApp from "./components/todo/TodoApp";
+ // Assuming you have a helper to fetch tasks
 
-export default function Home() {
-  return <TodoApp />;
+import TodoApp from "./components/todo/TodoApp";
+import { getTasks } from "./lib/data";
+
+export default async function Page() {
+  const initialTasks = await getTasks();
+  
+  return (
+    <main>
+      <TodoApp initialTasks={initialTasks} />
+    </main>
+  );
 }
